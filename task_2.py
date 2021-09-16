@@ -1,50 +1,92 @@
-#  Написать два алгоритма нахождения i-го по счёту простого числа.
-# Без использования «Решета Эратосфена»;
-# Используя алгоритм «Решето Эратосфена»
-# Примечание ко всему домашнему заданию: Проанализировать скорость и сложность алгоритмов.
-#  Результаты анализа сохранить в виде комментариев в файле с кодом.
+# Написать программу сложения и умножения двух шестнадцатеричных чисел.
+# При этом каждое число представляется как массив, элементы которого это цифры числа.
+# Например, пользователь ввёл A2 и C4F. Сохранить их как [‘A’, ‘2’] и [‘C’, ‘4’, ‘F’] соответственно.
+# Сумма чисел из примера: [‘C’, ‘F’, ‘1’], произведение - [‘7’, ‘C’, ‘9’, ‘F’, ‘E’].
+# Примечание: для решения задач попробуйте применить какую-нибудь коллекцию из модуля collections
 
-import cProfile
-
-
-# Первый вариант решения (Решето Эратосфена)
-def sieve(n):
-    element = [i for i in range(n)]
-    element[1] = 0
-    for i in range(2, n):
-        if element[i] != 0:
-            j = i * 2
-            while j < n:
-                element[j] = 0
-                j += i
-    result = [i for i in element if i != 0]
-    return result
+from collections import deque
 
 
-# Конец первого варианта решения
+def sum_hex(x, y):
+    HEX_NUM = {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+               'A': 10, 'B': 11, 'C': 12, 'D': 13, 'E': 14, 'F': 15,
+               0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9',
+               10: 'A', 11: 'B', 12: 'C', 13: 'D', 14: 'E', 15: 'F'}
+    result = deque()
+    transfer = 0
 
-cProfile.run('sieve(1000000)')
+    if len(y) > len(x):
+        x, y = deque(y), deque(x)
 
+    else:
+        x, y = deque(x), deque(y)
 
-# 0.591 seconds
+    while x:
 
-# Вывод простых чисел вплоть до n
-def prime(n):
-    n = int(n)
-    lst = [2]
-    for i in range(3, n + 1, 2):
-        if (i > 10) and (i % 10 == 5):
-            continue
-        for j in lst:
-            if j * j - 1 > i:
-                lst.append(i)
-                break
-            if i % j == 0:
-                break
+        if y:
+            res = HEX_NUM[x.pop()] + HEX_NUM[y.pop()] + transfer
+
         else:
-            lst.append(i)
-    return lst
+            res = HEX_NUM[x.pop()] + transfer
+
+        transfer = 0
+
+        if res < 16:
+            result.appendleft(HEX_NUM[res])
+
+        else:
+            result.appendleft(HEX_NUM[res - 16])
+            transfer = 1
+
+    if transfer:
+        result.appendleft('1')
+
+    return list(result)
 
 
-cProfile.run('prime(1000000)')
-# 2.337 seconds
+def mult_hex(x, y):
+    HEX_NUM = {'0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+               'A': 10, 'B': 11, 'C': 12, 'D': 13, 'E': 14, 'F': 15,
+               0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9',
+               10: 'A', 11: 'B', 12: 'C', 13: 'D', 14: 'E', 15: 'F'}
+    result = deque()
+    spam = deque([deque() for _ in range(len(y))])
+
+    x, y = x.copy(), deque(y)
+
+    for i in range(len(y)):
+        m = HEX_NUM[y.pop()]
+
+        for j in range(len(x) - 1, -1, -1):
+            spam[i].appendleft(m * HEX_NUM[x[j]])
+
+        for _ in range(i):
+            spam[i].append(0)
+
+    transfer = 0
+
+    for _ in range(len(spam[-1])):
+        res = transfer
+
+        for i in range(len(spam)):
+            if spam[i]:
+                res += spam[i].pop()
+
+        if res < 16:
+            result.appendleft(HEX_NUM[res])
+
+        else:
+            result.appendleft(HEX_NUM[res % 16])
+            transfer = res // 16
+
+    if transfer:
+        result.appendleft(HEX_NUM[transfer])
+
+    return list(result)
+
+
+a = list(input('Введите 1-е шестнадцатиричное число: ').upper())
+b = list(input('Введите 2-е шестнадцатиричное число: ').upper())
+
+print(*a, '+', *b, '=', *sum_hex(a, b))
+print(*a, '*', *b, '=', *mult_hex(a, b))
